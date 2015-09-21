@@ -1,0 +1,21 @@
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.9.24/paper-full.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.13/jquery.mousewheel.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js"></script>
+<script type="text/jsx" src="/ui.jsx"></script>
+
+
+<body style="margin: 0;">
+    <div style="width: 50%;float: left; height: 100%;">
+        <h1>Manage Course</h1>
+        <button data-event="drawCourse">Draw course</button>
+        <button data-event="stopDrawCourse" style="display: none;">Finish drawing course</button>
+        <button data-event="deleteCourse">Delete course</button>
+        <div data-role="results"></div>
+    </div>
+    <canvas id="canvas"></canvas>
+    <script src="main.js"></script>
+
+</body>
