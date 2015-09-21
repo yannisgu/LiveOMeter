@@ -135,22 +135,6 @@
             };
 
             return new calibration(value, 1);
-
-
-
-            var calibration = [];
-
-            var values = value.split("|");
-            for(var i = 0; i < values.length; i = i + 4) {
-                calibration.push({
-                    lat: values[i],
-                    lon: values[i+1],
-                    x: values[i+2],
-                    y: values[i+3]
-                });
-            }
-
-            return calibration;
         },
         getPoints(ev, offset, callback) {
             $.get("/gps/" + ev.id + "/data.php?offset=0&reset=-1", function(data) {
@@ -196,7 +180,7 @@
                             wgsy = (100000 * wgsy + "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".indexOf(values[i].substring(2, 3)) - 31) / 100000;
                         }
                         else {
-                            time += parts[0];
+                            time += parts[0] / 1;
                             wgsx += parts[1] / 50000;
                             wgsy += parts[2] / 100000;
                         }
@@ -241,9 +225,7 @@
                 var path = new paper.Path();
                 // Give the stroke a color
                 path.strokeColor = 'black';
-                path.add(new paper.Point(trackpoints[0].mapx, trackpoints[0].mapy));
-                console.log(trackpoints[0])
-                for(var i = 1; i < trackpoints.length; i++) {
+                for(var i = 0; i < trackpoints.length; i++) {
                     var trackpoint = trackpoints[i];
             		path.add(new paper.Point(trackpoint.mapx, trackpoint.mapy ));
                 }
@@ -333,18 +315,102 @@
         }
     }
 
+    function getResults(data, ev) {
+        return _.map(data, function(points, key) {
+            var competitor = _.findWhere(ev.competitor, {"id": key});
+
+            var hours = competitor.startTime.substring(0,2);
+            var minutes = competitor.startTime.substring(2,4);
+            var seconds = competitor.startTime.substring(4,6);
+            var startTime = hours * 60 * 60 + minutes * 60 + seconds * 1 - ev.timezone * 60;
+
+            var controls = [];
+            for(var i = 1; i < currentCourse.length; i++) {
+                var control = currentCourse[i];
+                var matchingPoint = _.find(points, function(point) {
+                    return point.mapx > control.x - 15 && point.mapx < control.x + 15
+                        && point.mapy > control.y - 15 && point.mapy < control.y + 15
+                });
+                if(!matchingPoint) {
+                    matchingPoint = {};
+                }
+
+                var j = i - 1;
+                var last = null;
+                var isValid = false;
+                while(j > 0 && !last) {
+                    if(controls[j-1].time) {
+                        last = controls[j-1].time;
+                        isValid = j == i - 1;
+                    }
+                    j--;
+                }
+
+                if(!last) {
+                    var dayDiff = Math.floor(matchingPoint.time / 86400) * 86400
+                    last = startTime + dayDiff;
+                    isValid = i == 1;
+                }
+
+                controls.push({time: matchingPoint.time, diff: matchingPoint.time - last, isValid: isValid })
+
+            }
+            return {competitor: competitor, controls: controls, startTime: startTime}
+        });
+    }
+
+    function calculateErrors(results) {
+        var controlTimes = _.reduce(results, function(total, r) {
+            for(var i = 0; i < r.controls.length; i++) {
+                var control = r.controls[i];
+                if(control.isValid) {
+                    if(!total[i]) {
+                        total[i] = [];
+                    }
+                    total[i].push(control.diff)
+                }
+            }
+            return total;
+        }, []);
+
+        var topAverages = [];
+        _.each(controlTimes, function(controlTime, key) {
+            topAverages[key] = _.chain(controlTime).sortBy().take(controlTime.length / 4).sum() / (controlTime.length / 4);
+        });
+
+        _.each(results, function(result) {
+            _.each(result.controls, function(control, number) {
+                if(control.isValid) {
+                    control.performanceIndice = control.diff / topAverages[number];
+                }
+            });
+            var performanceIndices = _.map(result.controls, "performanceIndice");
+
+            var middle = (performanceIndices.length + 1) / 2;
+            var sorted = _.sortBy(performanceIndices);
+            var normalIndice = (sorted.length % 2) ? sorted[middle - 1] : (sorted[middle - 1.5] + sorted[middle - 0.5]) / 2;
+
+            _.each(result.controls, function(control, number) {
+                if(control.isValid) {
+                    control.isError = control.performanceIndice - normalIndice > 0.1;
+                }
+            });
+        });
+    }
+
     GpsSeuranta.getEvent("20150918D1718", function(ev) {
         GpsSeuranta.getPoints(ev, 0, function(data) {
             Canvas.draw(ev, data);
+
+            var results = getResults(data, ev);
+            calculateErrors(results);
+
             DataService.setResults(
-                _.map(data, function(item, key) {
-                    var competitor = _.where(ev.competitor, function(c) {
-                        c.id == id;
-                    })
-                    console.log(competitor)
-                    return {competitor: {name: competitor.name, id: key}}
-                })
-            );
+                {
+                    countControls: currentCourse.length - 2,
+                    event: ev,
+                    items: results
+            });
         })
     });
 
