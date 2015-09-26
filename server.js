@@ -9,7 +9,7 @@ app.use('/gps', proxy('www.tulospalvelu.fi', {
 }));
 app.use(require('express').static('public'));
 
-var server = app.listen(8001, function () {
+var server = app.listen(process.env.PORT || 8001, function () {
   var host = server.address().address;
   var port = server.address().port;
 
