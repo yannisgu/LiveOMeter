@@ -1,4 +1,10 @@
 var ResultsList = React.createClass({
+    setEvent(eventId) {
+        DataService.getResults(eventId, function(results) {
+            console.log(results)
+            this.setState(results);
+        }.bind(this));
+    },
     getInitialState: function() {
         return {items: []};
     },
@@ -9,6 +15,10 @@ var ResultsList = React.createClass({
     },
   render: function() {
     var time = function(time, isAbsolute) {
+        if(!time) {
+            return "";
+        }
+
         if(isAbsolute) {
             time = time + this.state.event.timezone * 60
         }
@@ -25,7 +35,8 @@ var ResultsList = React.createClass({
 
     var createControlCell = function(control, index) {
         return <td style={control.isError ? {'background-color': 'red', color: 'white'} : {}}>
-            {time(control.diff)}
+            {time(control.diff)} <br />
+            {time(control.total)}
         </td>
     }
 
@@ -61,4 +72,31 @@ var ResultsList = React.createClass({
   }
 });
 
-React.render(<ResultsList />, $("[data-role='results']")[0]);
+var resultList = React.render(<ResultsList />, $("[data-role='results']")[0]);
+
+
+var EventChooser = React.createClass({
+    getInitialState: function() {
+        return {events: []};
+    },
+    componentDidMount: function() {
+        DataService.getEvents(2015, function(events) {
+            this.setState({events: events});
+        }.bind(this));
+    },
+    handleChange: function(event) {
+        console.log(event.target.value);
+        console.log(resultList)
+        resultList.setEvent(event.target.value);
+    },
+    render: function() {
+        return <select onChange={this.handleChange}>
+            {this.state.events.map(function(event) {
+                    return <option value={event.id}>{event.name}</option>
+                }
+            )}
+        </select>
+    }
+});
+
+React.render(<EventChooser />, $("[data-role='events']")[0]);

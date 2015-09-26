@@ -1,6 +1,12 @@
 (function($) {
 
     var GpsSeuranta = {
+        getEvents(year, callback) {
+            var url = "/gps/events-" + year + ".json";
+            $.getJSON(url, function(events) {
+                callback(events.events)
+            })
+        },
         getEvent(id, callback) {
             var metdataUrl = "/gps/" + id  + "/init.txt";
             $.get(metdataUrl, function(metadata) {
@@ -199,37 +205,50 @@
 
     var Canvas = {
         draw(_event, competitors) {
+            window.currentEventId = _event.id;
+
             var canvas = document.getElementById('canvas');
             paper.setup(canvas);
+            paper.project.activeLayer.removeChildren();
 
-
+            var imageId = "map" +  Math.floor(Math.random() * 1000000);
             var img  = $("<img />");
             img.attr("src", "/gps/" + _event.id + "/map");
-            img.attr("id", "map")
+            img.attr("id", imageId)
             img.hide()
-            $("body").append(img);
 
-            paper.view.viewSize.width =  $(window).width() / 2;
-            paper.view.viewSize.height = $(window).height();
 
-            $(window).resize(function() {
-                paper.view.viewSize.width =  ($(window).width() / 2) -1;
+            img.load(function() {
+                paper.view.viewSize.width =  ($(window).width() / 2) -10;
                 paper.view.viewSize.height = window.innerHeight;
+                console.log(    paper.view.viewSize.height)
+                console.log( ($(window).width() / 2) -1)
+
+                $(window).resize(function() {
+                    paper.view.viewSize.width =  ($(window).width() / 2) -1;
+                    paper.view.viewSize.height = window.innerHeight;
+                })
+
+                var raster = new paper.Raster(imageId);
+                raster.position = new paper.Point(img.width() / 2, img.height() / 2);
+
+                for(var competitor in competitors) {
+                    var trackpoints = competitors[competitor];
+                    var path = new paper.Path();
+                    // Give the stroke a color
+                    path.strokeColor = 'black';
+                    for(var i = 0; i < trackpoints.length; i++) {
+                        var trackpoint = trackpoints[i];
+                		path.add(new paper.Point(trackpoint.mapx, trackpoint.mapy ));
+                    }
+                }
+
+
+                window.currentCourse = getCourse(_event.id);
+                Canvas.updateCourseDrawing();
             })
 
-            var raster = new paper.Raster('map');
-            raster.position = new paper.Point(map.width / 2,map.height / 2);
-
-            for(var competitor in competitors) {
-                var trackpoints = competitors[competitor];
-                var path = new paper.Path();
-                // Give the stroke a color
-                path.strokeColor = 'black';
-                for(var i = 0; i < trackpoints.length; i++) {
-                    var trackpoint = trackpoints[i];
-            		path.add(new paper.Point(trackpoint.mapx, trackpoint.mapy ));
-                }
-            }
+            $("body").append(img);
 
             var dragged = false;
             var tool = new paper.Tool();
@@ -352,7 +371,7 @@
                     isValid = i == 1;
                 }
 
-                controls.push({time: matchingPoint.time, diff: matchingPoint.time - last, isValid: isValid })
+                controls.push({time: matchingPoint.time, diff: matchingPoint.time - last, isValid: isValid, total: matchingPoint.time - startTime })
 
             }
             return {competitor: competitor, controls: controls, startTime: startTime}
@@ -375,7 +394,9 @@
 
         var topAverages = [];
         _.each(controlTimes, function(controlTime, key) {
-            topAverages[key] = _.chain(controlTime).sortBy().take(controlTime.length / 4).sum() / (controlTime.length / 4);
+            if(controlTime) {
+                topAverages[key] = _.chain(controlTime).sortBy().take(controlTime.length / 4).sum() / (controlTime.length / 4);
+            }
         });
 
         _.each(results, function(result) {
@@ -384,7 +405,7 @@
                     control.performanceIndice = control.diff / topAverages[number];
                 }
             });
-            var performanceIndices = _.map(result.controls, "performanceIndice");
+            var performanceIndices = _.filter(_.map(result.controls, "performanceIndice"), function(p) {return !!p;});
 
             var middle = (performanceIndices.length + 1) / 2;
             var sorted = _.sortBy(performanceIndices);
@@ -398,12 +419,43 @@
         });
     }
 
-    GpsSeuranta.getEvent("20150918D1718", function(ev) {
+    function sortResults(results) {
+        function compare(res1, res2) {
+            var res1Last = res1.controls.length - 1;
+            var res2Last = res2.controls.length - 1;
+            for(var i = res1Last; i >= 0; i--) {
+                if(res1.controls[i] && res1.controls[i].total && res2.controls[i] && res2.controls[i].total) {
+                    var total1 = res1.controls[i].total;
+                    var total2 = res2.controls[i].total;
+                    total1 = total1 % 86400;
+                    total2 = total2 % 86400;
+                    return total1  > total2 ? 1 : -1;
+                }
+            }
+
+            return 0;
+        }
+
+
+        for (var n = results.length; n >= 1; n-- ) {
+            for (var i = 0; i < n-1; i++) {
+                if (compare(results[i], results[i+1]) > 0){
+                    console.log(results[i].competitor.name)
+                    var temp = results[i];
+                    results[i] = results[i + 1];
+                    results[i + 1] = temp;
+                }
+            }
+        }
+    }
+
+/*    GpsSeuranta.getEvent("SMlangH21", function(ev) {
         GpsSeuranta.getPoints(ev, 0, function(data) {
             Canvas.draw(ev, data);
 
             var results = getResults(data, ev);
             calculateErrors(results);
+            sortResults(results);
 
             DataService.setResults(
                 {
@@ -412,10 +464,10 @@
                     items: results
             });
         })
-    });
+    });*/
 
-    function getCourse() {
-        var courseJson = localStorage.getItem("course");
+    function getCourse(eventId) {
+        var courseJson = localStorage.getItem("course" + eventId);
         if(!courseJson) {
             return [];
         }
@@ -426,15 +478,14 @@
         });
     }
 
-    function saveCourse() {
+
+
+    function saveCourse(eventId) {
         var course = _.map(currentCourse, function(item) {
             return {x: item.x, y: item.y};
         });
-        localStorage.setItem("course", JSON.stringify(course));
+        localStorage.setItem("course" + eventId, JSON.stringify(course));
     }
-
-    var currentCourse = getCourse();
-
 
     var drawCourseEnabled = false;
     $("[data-event='drawCourse']").click(function() {
@@ -446,12 +497,12 @@
         $(this).hide();
         $("[data-event='drawCourse']").show();
         drawCourseEnabled = false;
-        saveCourse()
+        saveCourse(currentEventId)
     });
 
     $("[data-event='deleteCourse']").click(function() {
         currentCourse = [];
-        saveCourse();
+        saveCourse(currentEventId);
         Canvas.updateCourseDrawing();
         paper.view.draw();
     });
@@ -465,6 +516,23 @@
             _.each(DataService._callbacks, function(callback) {
                 callback(results);
             });
+        },
+        getEvents: GpsSeuranta.getEvents,
+        getResults: function(eventId, callback) {
+            GpsSeuranta.getEvent(eventId, function(ev) {
+                GpsSeuranta.getPoints(ev, 0, function(data) {
+                    Canvas.draw(ev, data);
+
+                    var results = getResults(data, ev);
+                    calculateErrors(results);
+                    sortResults(results);
+                    callback({
+                            countControls: currentCourse.length - 2,
+                            event: ev,
+                            items: results
+                    });
+                })
+            })
         }
     }
 
