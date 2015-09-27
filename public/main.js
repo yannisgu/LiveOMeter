@@ -205,6 +205,7 @@
 
     var Canvas = {
         draw(_event, competitors) {
+            console.log("hey")
             window.currentEventId = _event.id;
 
             var canvas = document.getElementById('canvas');
@@ -221,8 +222,6 @@
             img.load(function() {
                 paper.view.viewSize.width =  ($(window).width() / 2) -10;
                 paper.view.viewSize.height = window.innerHeight;
-                console.log(    paper.view.viewSize.height)
-                console.log( ($(window).width() / 2) -1)
 
                 $(window).resize(function() {
                     paper.view.viewSize.width =  ($(window).width() / 2) -1;
@@ -243,9 +242,7 @@
                     }
                 }
 
-
-                window.currentCourse = getCourse(_event.id);
-                Canvas.updateCourseDrawing();
+                Canvas.updateCourseDrawing();;
             })
 
             $("body").append(img);
@@ -270,6 +267,7 @@
                 if(drawCourseEnabled && !dragged) {
                     currentCourse.push(event.point);
                     Canvas.updateCourseDrawing();
+                    DataService.notifyCourseChanged(currentCourse)
                 }
 
                 dragged = false;
@@ -334,7 +332,7 @@
         }
     }
 
-    function getResults(data, ev) {
+    function getResults(data, ev, course) {
         return _.map(data, function(points, key) {
             var competitor = _.findWhere(ev.competitor, {"id": key});
 
@@ -344,8 +342,9 @@
             var startTime = hours * 60 * 60 + minutes * 60 + seconds * 1 - ev.timezone * 60;
 
             var controls = [];
-            for(var i = 1; i < currentCourse.length; i++) {
-                var control = currentCourse[i];
+
+            for(var i = 1; i < course.length; i++) {
+                var control = course[i];
                 var matchingPoint = _.find(points, function(point) {
                     return point.mapx > control.x - 15 && point.mapx < control.x + 15
                         && point.mapy > control.y - 15 && point.mapy < control.y + 15
@@ -504,11 +503,13 @@
         currentCourse = [];
         saveCourse(currentEventId);
         Canvas.updateCourseDrawing();
+        DataService.notifyCourseChanged(currentCourse)
         paper.view.draw();
     });
 
     var DataService = {
         _callbacks: [],
+        getCourse: getCourse,
         notify(callback) {
             DataService._callbacks.push(callback);
         },
@@ -518,23 +519,33 @@
             });
         },
         getEvents: GpsSeuranta.getEvents,
-        getResults: function(eventId, callback) {
+        getResults: function(eventId, callback, course) {
             GpsSeuranta.getEvent(eventId, function(ev) {
                 GpsSeuranta.getPoints(ev, 0, function(data) {
-                    Canvas.draw(ev, data);
 
-                    var results = getResults(data, ev);
+                    var results = getResults(data, ev, course);
                     calculateErrors(results);
                     sortResults(results);
                     callback({
                             countControls: currentCourse.length - 2,
                             event: ev,
-                            items: results
+                            items: results,
+                            points: data
                     });
                 })
             })
+        },
+        _courseChangedCallbacks: [],
+        onCourseChanged(callback) {
+            DataService._courseChangedCallbacks.push(callback)
+        } ,
+        notifyCourseChanged(course) {
+            _.each(DataService._courseChangedCallbacks, function(callback) {
+                callback(course);
+            });
         }
     }
 
     window.DataService = DataService;
+    window.Canvas = Canvas;
 })(jQuery);

@@ -1,9 +1,17 @@
 var ResultsList = React.createClass({
+    currentEventId: null,
     setEvent(eventId) {
+        window.currentCourse = DataService.getCourse(eventId);
+        this.currentEventId = eventId;
+        this.updateResults(eventId, true, currentCourse);
+    },
+    updateResults(eventId, redrawCanvas, currentCourse) {
         DataService.getResults(eventId, function(results) {
-            console.log(results)
+            if(redrawCanvas) {
+                Canvas.draw(results.event, results.points);
+            }
             this.setState(results);
-        }.bind(this));
+        }.bind(this), currentCourse);
     },
     getInitialState: function() {
         return {items: []};
@@ -11,6 +19,9 @@ var ResultsList = React.createClass({
     componentDidMount: function() {
         DataService.notify(function(results) {
             this.setState(results);
+        }.bind(this));
+        DataService.onCourseChanged(function(course) {
+            this.updateResults(this.currentEventId, false, course);
         }.bind(this));
     },
   render: function() {
