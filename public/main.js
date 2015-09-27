@@ -349,6 +349,8 @@
                     return point.mapx > control.x - 15 && point.mapx < control.x + 15
                         && point.mapy > control.y - 15 && point.mapy < control.y + 15
                 });
+                var index = _.indexOf(points, matchingPoint);
+                points = _.slice(points, index + 1);
                 if(!matchingPoint) {
                     matchingPoint = {};
                 }
