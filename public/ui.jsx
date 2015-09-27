@@ -103,7 +103,9 @@ var EventChooser = React.createClass({
     render: function() {
         return <select onChange={this.handleChange}>
             {this.state.events.map(function(event) {
-                    return <option value={event.id}>{event.name}</option>
+                    if(event.id) {
+                        return <option value={event.id}>{event.name}</option>
+                    }
                 }
             )}
         </select>

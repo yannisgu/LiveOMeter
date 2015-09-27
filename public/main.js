@@ -437,35 +437,34 @@
             return 0;
         }
 
+        var sortedResults = [];
 
-        for (var n = results.length; n >= 1; n-- ) {
-            for (var i = 0; i < n-1; i++) {
-                if (compare(results[i], results[i+1]) > 0){
-                    console.log(results[i].competitor.name)
-                    var temp = results[i];
-                    results[i] = results[i + 1];
-                    results[i + 1] = temp;
+        for(var i = currentCourse.length -1; i >= 0; i--) {
+            for(var j = 0; j < results.length;) {
+                var result = results[j];
+                var control = result.controls[i];
+                if(control && control.total) {
+                    var inserted = false;
+                    for(var k = 0; k < sortedResults.length; k++) {
+                        if(control.total < sortedResults[k].controls[i].total) {
+                            sortedResults.splice(k, 0, result);
+                            inserted = true;
+                            break;
+                        }
+                    }
+
+                    if(!inserted) {
+                        sortedResults.push(result);
+                    }
+                    results.splice(j,1);
+                }
+                else {
+                    j++;
                 }
             }
         }
+        return sortedResults;
     }
-
-/*    GpsSeuranta.getEvent("SMlangH21", function(ev) {
-        GpsSeuranta.getPoints(ev, 0, function(data) {
-            Canvas.draw(ev, data);
-
-            var results = getResults(data, ev);
-            calculateErrors(results);
-            sortResults(results);
-
-            DataService.setResults(
-                {
-                    countControls: currentCourse.length - 2,
-                    event: ev,
-                    items: results
-            });
-        })
-    });*/
 
     function getCourse(eventId) {
         var courseJson = localStorage.getItem("course" + eventId);
@@ -527,7 +526,7 @@
 
                     var results = getResults(data, ev, course);
                     calculateErrors(results);
-                    sortResults(results);
+                    results = sortResults(results);
                     callback({
                             countControls: currentCourse.length - 2,
                             event: ev,
