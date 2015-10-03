@@ -205,7 +205,6 @@
 
     var Canvas = {
         draw(_event, competitors) {
-            console.log("hey")
             window.currentEventId = _event.id;
 
             var canvas = document.getElementById('canvas');
@@ -335,6 +334,9 @@
     function getResults(data, ev, course) {
         return _.map(data, function(points, key) {
             var competitor = _.findWhere(ev.competitor, {"id": key});
+            if(!competitor) {
+                return;
+            }
 
             var hours = competitor.startTime.substring(0,2);
             var minutes = competitor.startTime.substring(2,4);
@@ -376,7 +378,7 @@
 
             }
             return {competitor: competitor, controls: controls, startTime: startTime}
-        });
+        }).filter(function(runner) {return !!runner});
     }
 
     function calculateErrors(results) {
