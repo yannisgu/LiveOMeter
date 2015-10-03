@@ -4,10 +4,17 @@ var ResultsList = React.createClass({
     displayName: "ResultsList",
 
     currentEventId: null,
+    timeout: null,
     setEvent: function setEvent(eventId) {
         window.currentCourse = DataService.getCourse(eventId);
         this.currentEventId = eventId;
         this.updateResults(eventId, true, currentCourse);
+        if (!this.timeout) {
+            clearTimeout(this.timeout);
+        }
+        this.timeout = setTimeout((function () {
+            this.updateResults(eventId, true, currentCourse);
+        }).bind(this), 15000);
     },
     updateResults: function updateResults(eventId, redrawCanvas, currentCourse) {
         DataService.getResults(eventId, (function (results) {

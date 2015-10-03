@@ -1,9 +1,16 @@
 var ResultsList = React.createClass({
     currentEventId: null,
+    timeout: null,
     setEvent(eventId) {
         window.currentCourse = DataService.getCourse(eventId);
         this.currentEventId = eventId;
         this.updateResults(eventId, true, currentCourse);
+        if(!this.timeout) {
+            clearTimeout(this.timeout)
+        }
+        this.timeout = setTimeout(function() {
+            this.updateResults(eventId, true, currentCourse);
+        }.bind(this), 15000)
     },
     updateResults(eventId, redrawCanvas, currentCourse) {
         DataService.getResults(eventId, function(results) {
@@ -39,7 +46,7 @@ var ResultsList = React.createClass({
             time *= -1;
         }
         var hours = Math.floor(time % 86400 / 3600),
-            minutes = Math.floor((time % 86400 - 3600 * hours) / 60), 
+            minutes = Math.floor((time % 86400 - 3600 * hours) / 60),
             seconds = Math.floor(time % 86400 - hours *  3600 - 60 * minutes);
         return (isNegative ? "-" : "") + (hours > 0 ? ((hours < 10 ? "0" : "") + hours + ":") : "" ) + (10 > minutes ? "0" : "") + minutes + ":" + (10 > seconds ? "0" : "") + seconds;
     }.bind(this)
