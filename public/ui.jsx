@@ -39,7 +39,7 @@ var ResultsList = React.createClass({
             time *= -1;
         }
         var hours = Math.floor(time % 86400 / 3600),
-            minutes = Math.floor((time % 86400 - 3600 * hours) / 60);
+            minutes = Math.floor((time % 86400 - 3600 * hours) / 60), 
             seconds = Math.floor(time % 86400 - hours *  3600 - 60 * minutes);
         return (isNegative ? "-" : "") + (hours > 0 ? ((hours < 10 ? "0" : "") + hours + ":") : "" ) + (10 > minutes ? "0" : "") + minutes + ":" + (10 > seconds ? "0" : "") + seconds;
     }.bind(this)
@@ -84,6 +84,7 @@ var ResultsList = React.createClass({
 });
 
 var resultList = React.render(<ResultsList />, $("[data-role='results']")[0]);
+
 
 
 var EventChooser = React.createClass({
