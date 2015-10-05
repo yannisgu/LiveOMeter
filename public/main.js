@@ -280,19 +280,7 @@
 
                 dragged = false;
             };
-
-            var lastMobile;
-            $(canvas).on('touchstart', function (event) {
-                lastMobile = new paper.Point(event.originalEvent.touches[0].clientX / paper.view.zoom, event.originalEvent.touches[0].clientY / paper.view.zoom);
-            });
-            $(canvas).on('touchmove', function (event) {
-                var point = new paper.Point(event.originalEvent.changedTouches[0].clientX / paper.view.zoom, event.originalEvent.changedTouches[0].clientY / paper.view.zoom);
-
-                paper.view.center = paper.view.center.subtract(point).add(lastMobile);
-                paper.view.draw();
-                lastMobile = point;
-            });
-
+            
             $(canvas).on('mousewheel', function (event) {
                 var delta = event.deltaY;
                 var oldZoom = paper.view.zoom;
