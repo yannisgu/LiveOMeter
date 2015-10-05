@@ -9,7 +9,7 @@ var ResultsList = React.createClass({
             clearTimeout(this.timeout)
         }
         this.timeout = setTimeout(function() {
-            this.updateResults(eventId, true, currentCourse);
+            this.updateResults(eventId, false, currentCourse);
         }.bind(this), 15000)
     },
     updateResults(eventId, redrawCanvas, currentCourse) {
@@ -30,6 +30,26 @@ var ResultsList = React.createClass({
         DataService.onCourseChanged(function(course) {
             this.updateResults(this.currentEventId, false, course);
         }.bind(this));
+    },
+    showSplitOnMap: function(event) {
+        var targetElement = $(event.target);
+        var control = targetElement.parent().attr("data-control");
+        var runnerId = targetElement.parents("tr").attr("data-runnerid");
+        var leg1 = this.getLeg(runnerId, control);
+        var bestRunner = _.sortBy(this.state.items, function(runner) {
+            return runner.controls[control].diff;
+        })[0];
+        var leg2 = this.getLeg(bestRunner.competitor.id, control)
+        Canvas.drawComparasion(leg1, leg2)
+    },
+    getLeg(runnerId, control, color) {
+        var runner = _.find(this.state.items, function(runner) {
+            return runner.competitor.id == runnerId;
+        });
+        var controlFrom = runner.controls[control / 1 - 1];
+        var controlTo = runner.controls[control];
+        var points = this.state.points[runnerId];
+        return {controlFrom: controlFrom, controlTo: controlTo, trackpoints: points}
     },
   render: function() {
     var time = function(time, isAbsolute) {
@@ -52,14 +72,14 @@ var ResultsList = React.createClass({
     }.bind(this)
 
     var createControlCell = function(control, index) {
-        return <td style={control.isError ? {'background-color': 'red', color: 'white'} : {}}>
+        return <td style={control.isError ? {'background-color': 'red', color: 'white'} : {}} onClick={this.showSplitOnMap} data-control={index}>
             {time(control.diff)} <br />
             {time(control.total)}
         </td>
-    }
+    }.bind(this)
 
     var createItem = function(result, index) {
-      return <tr key={result.competitor.id}>
+      return <tr key={result.competitor.id} data-runnerid={result.competitor.id}>
             <td>{result.competitor.name}</td>
             <td>{time(result.startTime, true)}</td>
             {result.controls.map(createControlCell)}

@@ -13,7 +13,7 @@ var ResultsList = React.createClass({
             clearTimeout(this.timeout);
         }
         this.timeout = setTimeout((function () {
-            this.updateResults(eventId, true, currentCourse);
+            this.updateResults(eventId, false, currentCourse);
         }).bind(this), 15000);
     },
     updateResults: function updateResults(eventId, redrawCanvas, currentCourse) {
@@ -35,6 +35,26 @@ var ResultsList = React.createClass({
             this.updateResults(this.currentEventId, false, course);
         }).bind(this));
     },
+    showSplitOnMap: function showSplitOnMap(event) {
+        var targetElement = $(event.target);
+        var control = targetElement.parent().attr("data-control");
+        var runnerId = targetElement.parents("tr").attr("data-runnerid");
+        var leg1 = this.getLeg(runnerId, control);
+        var bestRunner = _.sortBy(this.state.items, function (runner) {
+            return runner.controls[control].diff;
+        })[0];
+        var leg2 = this.getLeg(bestRunner.competitor.id, control);
+        Canvas.drawComparasion(leg1, leg2);
+    },
+    getLeg: function getLeg(runnerId, control, color) {
+        var runner = _.find(this.state.items, function (runner) {
+            return runner.competitor.id == runnerId;
+        });
+        var controlFrom = runner.controls[control / 1 - 1];
+        var controlTo = runner.controls[control];
+        var points = this.state.points[runnerId];
+        return { controlFrom: controlFrom, controlTo: controlTo, trackpoints: points };
+    },
     render: function render() {
         var time = (function (time, isAbsolute) {
             if (!time) {
@@ -54,21 +74,21 @@ var ResultsList = React.createClass({
             return (isNegative ? "-" : "") + (hours > 0 ? (hours < 10 ? "0" : "") + hours + ":" : "") + (10 > minutes ? "0" : "") + minutes + ":" + (10 > seconds ? "0" : "") + seconds;
         }).bind(this);
 
-        var createControlCell = function createControlCell(control, index) {
+        var createControlCell = (function (control, index) {
             return React.createElement(
                 "td",
-                { style: control.isError ? { 'background-color': 'red', color: 'white' } : {} },
+                { style: control.isError ? { 'background-color': 'red', color: 'white' } : {}, onClick: this.showSplitOnMap, "data-control": index },
                 time(control.diff),
                 " ",
                 React.createElement("br", null),
                 time(control.total)
             );
-        };
+        }).bind(this);
 
         var createItem = function createItem(result, index) {
             return React.createElement(
                 "tr",
-                { key: result.competitor.id },
+                { key: result.competitor.id, "data-runnerid": result.competitor.id },
                 React.createElement(
                     "td",
                     null,

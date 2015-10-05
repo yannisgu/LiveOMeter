@@ -248,7 +248,6 @@
             var tool = new paper.Tool();
             window.last = null;
             tool.onMouseDown = function (event) {
-                console.log("asdf")
                 if(event.event.touches) {
                     last = new paper.Point(event.event.touches[0].clientX / paper.view.zoom, event.event.touches[0].clientY / paper.view.zoom);
                 }
@@ -265,8 +264,6 @@
                 else {
                     point = new paper.Point(event.event.clientX / paper.view.zoom, event.event.clientY / paper.view.zoom);
                 }
-                console.log("point", point)
-                console.log("lasat" ,   last)
 
                 paper.view.center = paper.view.center.subtract(point).add(last);
                 last = point;
@@ -287,7 +284,6 @@
             var lastMobile;
             $(canvas).on('touchstart', function (event) {
                 lastMobile = new paper.Point(event.originalEvent.touches[0].clientX / paper.view.zoom, event.originalEvent.touches[0].clientY / paper.view.zoom);
-                console.log(lastMobile)
             });
             $(canvas).on('touchmove', function (event) {
                 var point = new paper.Point(event.originalEvent.changedTouches[0].clientX / paper.view.zoom, event.originalEvent.changedTouches[0].clientY / paper.view.zoom);
@@ -312,7 +308,33 @@
             Canvas.updateCourseDrawing();
             paper.view.draw();
         },
+        currentControl: null,
+        drawControl: function(controlFrom, controlTo, trackpoints, color) {
+            var path = new paper.Path();
+            // Give the stroke a color
+            path.strokeColor = color;
+            path.strokeWidth = 5;
+            for (var i = 0; i < trackpoints.length; i++) {
+                var trackpoint = trackpoints[i];
+
+                if((!controlFrom || controlFrom.time <= trackpoint.time) && controlTo.time >= trackpoint.time) {
+                    path.add(new paper.Point(trackpoint.mapx, trackpoint.mapy));
+                }
+            }
+
+            paper.view.draw();
+            return path;
+        },
+        comparasionControls: [],
+        drawComparasion: function(leg1, leg2) {
+            for(var control in Canvas.comparasionControls) {
+                Canvas.comparasionControls[control].remove();
+            }
+
+            Canvas.comparasionControls = [Canvas.drawControl(leg1.controlFrom, leg1.controlTo, leg1.trackpoints, 'red'), Canvas.drawControl(leg2.controlFrom, leg2.controlTo, leg2.trackpoints, 'green')]
+        },
         _courseObjects: [],
+
         updateCourseDrawing: function updateCourseDrawing() {
             _.each(Canvas._courseObjects, function (i) {
                 i.remove();
@@ -369,9 +391,21 @@
 
             for (var i = 1; i < course.length; i++) {
                 var control = course[i];
-                var matchingPoint = _.find(points, function (point) {
+                var possiblePoints = _.filter(points, function(point) {
                     return point.mapx > control.x - 15 && point.mapx < control.x + 15 && point.mapy > control.y - 15 && point.mapy < control.y + 15;
-                });
+               })
+                var tuples = _.map(possiblePoints, function(val) {
+                    var diff = control.subtract(new paper.Point(val.mapx, val.mapy)).length;
+                    return [val, Math.abs(diff)];
+               });
+              var matchingPoint =  _.reduce(tuples, function(memo, val) {
+                   return (memo[1] < val[1]) ? memo : val;
+               }, [-1, 999])[0];
+
+
+                /*var matchingPoint = _.find(points, function (point) {
+                    return point.mapx > control.x - 15 && point.mapx < control.x + 15 && point.mapy > control.y - 15 && point.mapy < control.y + 15;
+                });*/
                 var index = _.indexOf(points, matchingPoint);
                 points = _.slice(points, index + 1);
                 if (!matchingPoint) {
