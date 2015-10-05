@@ -9,7 +9,7 @@ var uglify = require('gulp-uglify');
 var sourcemaps = require('gulp-sourcemaps');
 var babelify = require('babelify');
 
-gulp.task('default', function () {
+gulp.task('js', function () {
   // set up the browserify instance on a task basis
   var b = browserify({
     entries: './src/browser.js',
@@ -25,5 +25,13 @@ gulp.task('default', function () {
     .pipe(uglify())
     .on('error', gutil.log)
     .pipe(sourcemaps.write('./'))
-    .pipe(gulp.dest('./public/'));
+    .pipe(gulp.dest('./dist/js'));
 });
+
+gulp.task('html', function() {
+    return gulp
+        .src('./src/index.html')
+        .pipe(gulp.dest('./dist'))
+});
+
+gulp.task('default', ['html', 'js'])
