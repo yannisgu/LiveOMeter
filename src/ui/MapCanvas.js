@@ -1,5 +1,6 @@
 import * as DataService from '../data/ResultService'
 import ResultsStore from '../stores/ResultsStore'
+import course from '../stores/CurrentCourseStore'
 
 export function init() {
     ResultsStore.on("update", function(value){
@@ -50,7 +51,7 @@ export function draw(_event, competitors) {
 
     var dragged = false;
     var tool = new paper.Tool();
-    window.last = null;
+    var last = null;
     tool.onMouseDown = function (event) {
         if(event.event.touches) {
             last = new paper.Point(event.event.touches[0].clientX / paper.view.zoom, event.event.touches[0].clientY / paper.view.zoom);
@@ -76,10 +77,10 @@ export function draw(_event, competitors) {
     };
 
     tool.onMouseUp = function (event) {
-        if (drawCourseEnabled && !dragged) {
-            currentCourse.push(event.point);
+        if (course.get().drawingEnabled && !dragged) {
+            console.log(event.point)
+            course.get().course.push(event.point);
             updateCourseDrawing();
-            DataService.notifyCourseChanged(currentCourse);
         }
 
         dragged = false;
@@ -128,18 +129,20 @@ export function drawComparasion(leg1, leg2) {
 var _courseObjects = [];
 
 export function updateCourseDrawing() {
+    console.log(course.get().course)
+
     _.each(_courseObjects, function (i) {
         i.remove();
     });
 
-    _.each(currentCourse, function (courseItem, key) {
+    _.each(course.get().course, function (courseItem, key) {
 
         if (key == 0) {
             var paperItem = new paper.Path.RegularPolygon(courseItem, 3, 20);
             paperItem.strokeColor = '#800080';
             paperItem.strokeWidth = 3;
             _courseObjects.push(paperItem);
-        } else if (key == currentCourse.length - 1) {
+        } else if (key == course.get().course.length - 1) {
             var paperItem = new paper.Path.Circle(courseItem, 20);
             paperItem.strokeColor = '#800080';
             paperItem.strokeWidth = 3;
@@ -157,7 +160,7 @@ export function updateCourseDrawing() {
         }
 
         if (key != 0) {
-            var lastItem = currentCourse[key - 1];
+            var lastItem = course.get().course[key - 1];
             var paperItem = new paper.Path.Line(lastItem, courseItem);
             paperItem.strokeColor = '#800080';
             paperItem.strokeWidth = 3;
