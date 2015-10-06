@@ -1,4 +1,11 @@
-import * as DataService from '../data/ResultService' 
+import * as DataService from '../data/ResultService'
+import ResultsStore from '../stores/ResultsStore'
+
+export function init() {
+    ResultsStore.on("update", function(value){
+        draw(value.event, value.points)
+    });
+}
 
 export function draw(_event, competitors) {
     window.currentEventId = _event.id;

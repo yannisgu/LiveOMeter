@@ -12,7 +12,6 @@ export function setResults(results) {
     });
 }
 
-
 export const getCourse = CourseService.getCourse
 export const getEvents = GpsSeuranta.getEvents
 
@@ -171,6 +170,7 @@ function sortResults(results) {
             var result = results[j];
             var control = result.controls[i];
             if (control && control.total) {
+                var hasControl = true;
                 var inserted = false;
                 for (var k = 0; k < sortedResults.length; k++) {
                     if (control.total < sortedResults[k].controls[i].total) {
@@ -189,5 +189,7 @@ function sortResults(results) {
             }
         }
     }
-    return sortedResults;
+
+    var emptyResults = _.filter(results, r => _.all(r.controls, c => !c));
+    return sortedResults.concat(_.sortBy (emptyResults, e => e.competitor.starttime))
 }

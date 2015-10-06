@@ -1,5 +1,7 @@
 import * as DataService from '../data/ResultService'
 import * as Canvas from '../ui/MapCanvas'
+import app from '../app'
+import ResultsStore from '../stores/ResultsStore'
 
 
 var ResultsList = React.createClass({
@@ -17,22 +19,24 @@ var ResultsList = React.createClass({
         }.bind(this), 15000)
     },
     updateResults(eventId, redrawCanvas, currentCourse) {
-        DataService.getResults(eventId, function(results) {
+        /*DataService.getResults(eventId, function(results) {
             if(redrawCanvas) {
                 Canvas.draw(results.event, results.points);
             }
             this.setState(results);
-        }.bind(this), currentCourse);
+        }.bind(this), currentCourse);*/
     },
     getInitialState: function() {
-        return {items: []};
+        return ResultsStore.get();
     },
     componentDidMount: function() {
+        ResultsStore.on("update", (value) => this.setState(value));
+
         DataService.notify(function(results) {
-            this.setState(results);
+        //    this.setState(results);
         }.bind(this));
         DataService.onCourseChanged(function(course) {
-            this.updateResults(this.currentEventId, false, course);
+        //    this.updateResults(this.currentEventId, false, course);
         }.bind(this));
     },
     showSplitOnMap: function(event) {
@@ -128,8 +132,7 @@ var EventChooser = React.createClass({
         }.bind(this));
     },
     handleChange: function(event) {
-        console.log(event.target.value);
-        console.log(resultList)
+        app.emit('changeCurrentEvent', event.target.value)
         resultList.setEvent(event.target.value);
     },
     render: function() {
