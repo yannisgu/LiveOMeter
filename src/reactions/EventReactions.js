@@ -6,8 +6,9 @@ import * as CourseService from '../data/CourseService'
 
 app.on('changeCurrentEvent').subscribe(function(eventId) {
     course.get().course.set(CourseService.getCourse(eventId)).now();
+    ResultsStore
 
     ResultService.getResults(eventId, function(results) {
-        ResultsStore.get().set(results);
-    }, course);
+        ResultsStore.get().set({eventId: eventId, results: results});
+    }, course.get().course);
 })

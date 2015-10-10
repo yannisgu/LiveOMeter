@@ -4,7 +4,7 @@ import course from '../stores/CurrentCourseStore'
 
 export function init() {
     ResultsStore.on("update", function(value){
-        draw(value.event, value.points)
+        draw(value.results.event, value.results.points)
     });
 }
 
@@ -78,7 +78,6 @@ export function draw(_event, competitors) {
 
     tool.onMouseUp = function (event) {
         if (course.get().drawingEnabled && !dragged) {
-            console.log(event.point)
             course.get().course.push(event.point);
             updateCourseDrawing();
         }

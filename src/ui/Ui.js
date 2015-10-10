@@ -27,10 +27,10 @@ var ResultsList = React.createClass({
         }.bind(this), currentCourse);*/
     },
     getInitialState: function() {
-        return ResultsStore.get();
+        return ResultsStore.get().results;
     },
     componentDidMount: function() {
-        ResultsStore.on("update", (value) => this.setState(value));
+        ResultsStore.on("update", (value) => this.setState(value.results));
 
         DataService.notify(function(results) {
         //    this.setState(results);

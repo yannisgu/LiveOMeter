@@ -21,9 +21,9 @@ export function getResults(eventId, callback, course) {
 
             var results = _getResults(data, ev, course);
             calculateErrors(results);
-            results = sortResults(results);
+            results = sortResults(results, course);
             callback({
-                countControls: currentCourse.length - 2,
+                countControls: course.length - 2,
                 event: ev,
                 items: results,
                 points: data
@@ -59,19 +59,15 @@ function _getResults(data, ev, course) {
             var control = course[i];
             var possiblePoints = _.filter(points, function(point) {
                 return point.mapx > control.x - 15 && point.mapx < control.x + 15 && point.mapy > control.y - 15 && point.mapy < control.y + 15;
-           })
+            })
             var tuples = _.map(possiblePoints, function(val) {
                 var diff = control.subtract(new paper.Point(val.mapx, val.mapy)).length;
                 return [val, Math.abs(diff)];
-           });
-          var matchingPoint =  _.reduce(tuples, function(memo, val) {
+            });
+            var matchingPoint =  _.reduce(tuples, function(memo, val) {
                return (memo[1] < val[1]) ? memo : val;
-           }, [-1, 999])[0];
+            }, [-1, 999])[0];
 
-
-            /*var matchingPoint = _.find(points, function (point) {
-                return point.mapx > control.x - 15 && point.mapx < control.x + 15 && point.mapy > control.y - 15 && point.mapy < control.y + 15;
-            });*/
             var index = _.indexOf(points, matchingPoint);
             points = _.slice(points, index + 1);
             if (!matchingPoint) {
@@ -146,7 +142,7 @@ function calculateErrors(results) {
     });
 }
 
-function sortResults(results) {
+function sortResults(results, course) {
     function compare(res1, res2) {
         var res1Last = res1.controls.length - 1;
         var res2Last = res2.controls.length - 1;
@@ -165,7 +161,7 @@ function sortResults(results) {
 
     var sortedResults = [];
 
-    for (var i = currentCourse.length - 1; i >= 0; i--) {
+    for (var i = course.length - 1; i >= 0; i--) {
         for (var j = 0; j < results.length;) {
             var result = results[j];
             var control = result.controls[i];
