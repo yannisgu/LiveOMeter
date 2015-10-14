@@ -13,7 +13,6 @@ export function init() {
 }
 
 export function draw(_event) {
-    window.currentEventId = _event.id;
 
     var canvas = document.getElementById('canvas');
     paper.setup(canvas);

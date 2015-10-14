@@ -5,7 +5,6 @@ import ResultsStore from '../stores/ResultsStore'
 
 
 var ResultsList = React.createClass({
-    currentEventId: null,
     getInitialState: function() {
         return ResultsStore.get().results;
     },
@@ -91,32 +90,4 @@ var ResultsList = React.createClass({
   }
 });
 
-var resultList = React.render(<ResultsList />, $("[data-role='results']")[0]);
-
-
-
-var EventChooser = React.createClass({
-    getInitialState: function() {
-        return {events: []};
-    },
-    componentDidMount: function() {
-        DataService.getEvents(2015, function(events) {
-            this.setState({events: events});
-        }.bind(this));
-    },
-    handleChange: function(event) {
-        app.emit('changeCurrentEvent', event.target.value)
-    },
-    render: function() {
-        return <select onChange={this.handleChange}>
-            {this.state.events.map(function(event) {
-                    if(event.id) {
-                        return <option value={event.id}>{event.name}</option>
-                    }
-                }
-            )}
-        </select>
-    }
-});
-
-React.render(<EventChooser />, $("[data-role='events']")[0]);
+React.render(<ResultsList />, $("[data-role='results']")[0]);
