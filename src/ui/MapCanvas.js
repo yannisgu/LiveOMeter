@@ -1,14 +1,18 @@
 import * as DataService from '../data/ResultService'
 import ResultsStore from '../stores/ResultsStore'
+import currentEvent from '../stores/CurrentEventStore'
 import course from '../stores/CurrentCourseStore'
 
 export function init() {
-    ResultsStore.on("update", function(value){
-        draw(value.results.event, value.results.points)
+    currentEvent.on("update", function(value){
+        draw(value.event)
+    });
+    ResultsStore.on("update", function(value) {
+        drawCompetitors(value.results.points)
     });
 }
 
-export function draw(_event, competitors) {
+export function draw(_event) {
     window.currentEventId = _event.id;
 
     var canvas = document.getElementById('canvas');
@@ -32,19 +36,9 @@ export function draw(_event, competitors) {
 
         var raster = new paper.Raster(imageId);
         raster.position = new paper.Point(img.width() / 2, img.height() / 2);
+        paper.project.activeLayer.appendBottom(raster);
 
-        for (var competitor in competitors) {
-            var trackpoints = competitors[competitor];
-            var path = new paper.Path();
-            // Give the stroke a color
-            path.strokeColor = 'black';
-            for (var i = 0; i < trackpoints.length; i++) {
-                var trackpoint = trackpoints[i];
-                path.add(new paper.Point(trackpoint.mapx, trackpoint.mapy));
-            }
-        }
 
-        updateCourseDrawing();;
     });
 
     $("body").append(img);
@@ -100,6 +94,22 @@ export function draw(_event, competitors) {
     updateCourseDrawing();
     paper.view.draw();
 }
+
+export function drawCompetitors(competitors) {
+    for (var competitor in competitors) {
+        var trackpoints = competitors[competitor];
+        var path = new paper.Path();
+        // Give the stroke a color
+        path.strokeColor = 'black';
+        for (var i = 0; i < trackpoints.length; i++) {
+            var trackpoint = trackpoints[i];
+            path.add(new paper.Point(trackpoint.mapx, trackpoint.mapy));
+        }
+    }
+
+    updateCourseDrawing();
+}
+
 var currentControl = null;
 export function drawControl(controlFrom, controlTo, trackpoints, color) {
     var path = new paper.Path();
@@ -125,10 +135,10 @@ export function drawComparasion(leg1, leg2) {
 
     comparasionControls = [drawControl(leg1.controlFrom, leg1.controlTo, leg1.trackpoints, 'red'), drawControl(leg2.controlFrom, leg2.controlTo, leg2.trackpoints, 'green')]
 }
-var _courseObjects = [];
 
+
+var _courseObjects = [];
 export function updateCourseDrawing() {
-    console.log(course.get().course)
 
     _.each(_courseObjects, function (i) {
         i.remove();
@@ -166,4 +176,6 @@ export function updateCourseDrawing() {
             _courseObjects.push(paperItem);
         }
     });
+
+    paper.view.draw();
 }

@@ -1,5 +1,3 @@
-import {init} from './data/CourseService.js'
-init();
 import './ui/Ui'
 
 import * as MapCanvas from './ui/MapCanvas'

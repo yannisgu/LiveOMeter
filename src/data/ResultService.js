@@ -1,17 +1,6 @@
 import * as GpsSeuranta from './GpsSeuranta'
 import * as CourseService from './CourseService'
 
-var _callbacks =  [];
-
-export function notify(callback) {
-    _callbacks.push(callback);
-}
-export function setResults(results) {
-    _.each(_callbacks, function (callback) {
-        callback(results);
-    });
-}
-
 export const getCourse = CourseService.getCourse
 export const getEvents = GpsSeuranta.getEvents
 
@@ -29,15 +18,6 @@ export function getResults(eventId, callback, course) {
                 points: data
             });
         });
-    });
-}
-var _courseChangedCallbacks = [];
-export function onCourseChanged(callback) {
-    _courseChangedCallbacks.push(callback);
-}
-export function notifyCourseChanged(course) {
-    _.each(_courseChangedCallbacks, function (callback) {
-        callback(course);
     });
 }
 

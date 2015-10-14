@@ -6,38 +6,11 @@ import ResultsStore from '../stores/ResultsStore'
 
 var ResultsList = React.createClass({
     currentEventId: null,
-    timeout: null,
-    setEvent(eventId) {
-        window.currentCourse = DataService.getCourse(eventId);
-        this.currentEventId = eventId;
-        this.updateResults(eventId, true, currentCourse);
-        if(!this.timeout) {
-            clearTimeout(this.timeout)
-        }
-        this.timeout = setTimeout(function() {
-            this.updateResults(eventId, false, currentCourse);
-        }.bind(this), 15000)
-    },
-    updateResults(eventId, redrawCanvas, currentCourse) {
-        /*DataService.getResults(eventId, function(results) {
-            if(redrawCanvas) {
-                Canvas.draw(results.event, results.points);
-            }
-            this.setState(results);
-        }.bind(this), currentCourse);*/
-    },
     getInitialState: function() {
         return ResultsStore.get().results;
     },
     componentDidMount: function() {
         ResultsStore.on("update", (value) => this.setState(value.results));
-
-        DataService.notify(function(results) {
-        //    this.setState(results);
-        }.bind(this));
-        DataService.onCourseChanged(function(course) {
-        //    this.updateResults(this.currentEventId, false, course);
-        }.bind(this));
     },
     showSplitOnMap: function(event) {
         var targetElement = $(event.target);
@@ -133,7 +106,6 @@ var EventChooser = React.createClass({
     },
     handleChange: function(event) {
         app.emit('changeCurrentEvent', event.target.value)
-        resultList.setEvent(event.target.value);
     },
     render: function() {
         return <select onChange={this.handleChange}>
