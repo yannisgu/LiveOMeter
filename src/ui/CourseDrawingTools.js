@@ -1,5 +1,5 @@
 import course from '../stores/CurrentCourseStore'
-import app from '../app'
+import app from '../App'
 
 class CourseDrawingTools extends React.Component {
     constructor() {

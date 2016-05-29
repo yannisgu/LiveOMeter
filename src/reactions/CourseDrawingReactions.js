@@ -1,4 +1,4 @@
-import app from '../app'
+import app from '../App'
 import course from '../stores/CurrentCourseStore'
 import * as CourseService from '../data/CourseService'
 import * as ResultService from '../data/ResultService'

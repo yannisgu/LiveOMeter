@@ -1,6 +1,6 @@
 import * as DataService from '../data/ResultService'
 import * as Canvas from '../ui/MapCanvas'
-import app from '../app'
+import app from '../App'
 import ResultsStore from '../stores/ResultsStore'
 
 

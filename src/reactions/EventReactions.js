@@ -1,4 +1,4 @@
-import app from '../app'
+import app from '../App'
 import * as ResultService from '../data/ResultService'
 import ResultsStore from '../stores/ResultsStore'
 import currentEvent from '../stores/CurrentEventStore'
